@@ -2,6 +2,13 @@
 const core = require('@actions/core')
 const debug = require('debug')('should-run-github-action')
 
+
+const target = core.getInput('target');
+if (target === '') {
+  console.log('target is required');
+  process.exit(0);
+}
+
 if (!process.env.GITHUB_EVENT) {
   console.log('GITHUB_EVENT is not defined')
   process.exit(0)
@@ -34,11 +41,12 @@ debug(ghEvent.pull_request.body)
 const commit = ghEvent.pull_request.head.sha
 debug('PR head commit SHA %s', commit)
 
-const runTestsCheckboxUnfilled = '[ ] re-run the tests'
-const runTestsCheckboxFilled = '[x] re-run the tests'
+const checkboxUnfilled = '[ ]'
+const checkboxFilled = '[x]'
+
 if (
-  ghEvent.changes.body.from.includes(runTestsCheckboxUnfilled) &&
-  ghEvent.pull_request.body.includes(runTestsCheckboxFilled)
+  ghEvent.changes.body.from.includes(`${checkboxUnfilled} ${target}`) &&
+  ghEvent.pull_request.body.includes(`${checkboxFilled} ${target}`)
 ) {
   console.log(
     'Should run GH action on branch "%s" and commit %s',
@@ -49,4 +57,5 @@ if (
   core.setOutput('commit', commit)
 } else {
   console.log('Should not run GH action')
+  core.setOutput('shouldRun', false)
 }
